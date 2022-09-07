@@ -1,32 +1,3 @@
-# bitfields - a bit of bit manipulation
-
-`nimble install bitfields`
-
-This library has no dependencies other than the Nim standard library.
-
-## About
-
-```nim
-type
-  Bit* = range[0'u8..1'u8]
-  BitField* = seq[Bit]
-```
-
-This package creates and performs operations on `BitField` type. Since `BitField` is just a `seq[Bit]` it is possible to use it with Nim's [`std/sequtils`](https://nim-lang.org/docs/sequtils.html). Consider also using [`std/bitops`](https://nim-lang.org/docs/bitops.html).
-
-## Features
-
-- [x] Get a single bit from a number or iterate over all bits
-- [x] Construct a `BitField` and manipulate it
-- [x] Perform logical/bitwise operations on `Bits` and `BitFields` (basically masks)
-- [x] Use `std/sequtils` on `BitFields` (`concat`, `map`, `filter`, ...)
-- [x] Flip and set bits in `BitFields`
-- [x] Get data back from a `BitField` and convert it back to `uint8` - `uint64` (which you can `cast` later)
-- [ ] Rotations & shifts ([`std/sequtils`](https://nim-lang.org/docs/sequtils.html) or [`std/deques`](https://nim-lang.org/docs/deques.html) can be used instead?)
-
-## Example
-
-```nim
 import std/[sequtils, sugar]
 import bitfields
 
@@ -109,4 +80,3 @@ bf3.resize(4)
 assert bf3 == @[0.Bit, 1, 1, 1]
 bf3.resize(uint8) 
 assert bf3 == @[0.Bit, 0, 0, 0, 0, 1, 1, 1]
-```
