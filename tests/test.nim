@@ -1,5 +1,5 @@
 import std/[sequtils, sugar]
-import bitfields
+import bitseqs
 
 doAssert bit(0b1010'u8, 0) == 0
 doAssert bit(0b1010'u8, 1) == 1
@@ -39,22 +39,22 @@ doAssert bits(x1).toSeq[^4..^1] == @[0.Bit, 1, 1, 1]
 doAssert bits(x2).toSeq[^4..^1] == @[1.Bit, 1, 1, 0]
 doAssert bits(x3).toSeq == @[0.Bit, 0, 0, 0, 1, 0, 0, 1]
 
-doAssert newBitField() == @[]
-doAssert newBitField(4) == @[0.Bit, 0, 0, 0]
-doAssert newBitField(byte) == @[0.Bit, 0, 0, 0, 0, 0, 0, 0]
+doAssert newBitSeq() == @[]
+doAssert newBitSeq(4) == @[0.Bit, 0, 0, 0]
+doAssert newBitSeq(byte) == @[0.Bit, 0, 0, 0, 0, 0, 0, 0]
 
 var
-  b1: BitField = x1.toBitField
-  b3: BitField = x3.toBitField
-  b4: BitField = x4.toBitField
+  b1: BitSeq = x1.toBitSeq
+  b3: BitSeq = x3.toBitSeq
+  b4: BitSeq = x4.toBitSeq
 
 doAssert b1[^4..^1] == @[0.Bit, 1, 1, 1]
 doAssert b3 == @[0.Bit, 0, 0, 0, 1, 0, 0, 1]
 doAssert b4[^4..^1] == @[0.Bit, 1, 0, 1]
 
-doAssert fromBitfield[uint8](b1) == x1
-doAssert fromBitfield[uint8](b3) == x3
-doAssert fromBitfield[uint16](b4) == cast[uint16](x4)
+doAssert fromBitSeq[uint8](b1) == x1
+doAssert fromBitSeq[uint8](b3) == x3
+doAssert fromBitSeq[uint16](b4) == cast[uint16](x4)
 
 doAssert x1.bitsIdxOnSeq.len == 3
 doAssert x3.bitsIdxOnSeq.len == 2
@@ -88,29 +88,29 @@ doAssert b1 == @[1.Bit, 0, 0, 0, 0, 0, 1, 1]
 var b13 = b1[0..3].concat(b3[^4..^1])
 doAssert b13 == @[1.Bit, 0, 0, 0, 1, 0, 0, 1]
 doAssert b13.count(1) == 3
-doAssert fromBitfield[uint8](b13) == 0b1000_1001
-doAssert fromBitfield[uint16](b13) == 0b1000_1001
-doAssert fromBitfield[BiggestUInt](b13) == 0b1000_1001
+doAssert fromBitSeq[uint8](b13) == 0b1000_1001
+doAssert fromBitSeq[uint16](b13) == 0b1000_1001
+doAssert fromBitSeq[BiggestUInt](b13) == 0b1000_1001
 
 b13 = b1.concat(b3)
 doAssert b13 == @[1.Bit, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1]
-doAssert fromBitfield[BiggestUInt](b13) == 0b1000_0011_0000_1001
-doAssert fromBitfield[uint16](b13) == 0b1000_0011_0000_1001
-doAssert fromBitfield[uint8](b13) == 0b0000_0000_0000_1001
-doAssert fromBitfield[uint8](b13).toBitField ==  @[0.Bit, 0, 0, 0, 1, 0, 0, 1]
+doAssert fromBitSeq[BiggestUInt](b13) == 0b1000_0011_0000_1001
+doAssert fromBitSeq[uint16](b13) == 0b1000_0011_0000_1001
+doAssert fromBitSeq[uint8](b13) == 0b0000_0000_0000_1001
+doAssert fromBitSeq[uint8](b13).toBitSeq ==  @[0.Bit, 0, 0, 0, 1, 0, 0, 1]
 
 var
   x5: int64 = int64.high
-  b5: BitField = x5.toBitField
+  b5: BitSeq = x5.toBitSeq
 doAssert b5 == @[0.Bit] & @[1.Bit].cycle(63)
 var b55 = b5 & b5
 doAssert b55 == @[0.Bit] & @[1.Bit].cycle(63) & @[0.Bit] & @[1.Bit].cycle(63)
-doAssert fromBitfield[uint64](b55[0..63]) == cast[uint64](int64.high)
-doAssert fromBitfield[uint64](b55[0..63]).toBitField == @[0.Bit] & @[1.Bit].cycle(63)
-doAssert fromBitfield[uint64](b55[1..64]).toBitField == @[1.Bit].cycle(63) & @[0.Bit]
-doAssert fromBitfield[uint64](b55[1..65]).toBitField == @[1.Bit].cycle(62) & @[0.Bit] & @[1.Bit] # basically b55[2..65]
+doAssert fromBitSeq[uint64](b55[0..63]) == cast[uint64](int64.high)
+doAssert fromBitSeq[uint64](b55[0..63]).toBitSeq == @[0.Bit] & @[1.Bit].cycle(63)
+doAssert fromBitSeq[uint64](b55[1..64]).toBitSeq == @[1.Bit].cycle(63) & @[0.Bit]
+doAssert fromBitSeq[uint64](b55[1..65]).toBitSeq == @[1.Bit].cycle(62) & @[0.Bit] & @[1.Bit] # basically b55[2..65]
 
-var b6: BitField = @[1.Bit, 0, 1, 0]
+var b6: BitSeq = @[1.Bit, 0, 1, 0]
 b6.resize(8)
 doAssert b6 == @[0.Bit, 0, 0, 0, 1, 0, 1, 0]
 b6.resize(4)
@@ -128,7 +128,7 @@ doAssert b6 == @[]
 b6.resize(byte)
 doAssert b6 == @[0.Bit].cycle(8)
 
-var b7: BitField = @[1.Bit, 0, 1, 0]
+var b7: BitSeq = @[1.Bit, 0, 1, 0]
 b7.bitFlip(0)
 doAssert b7 == @[0.Bit, 0, 1, 0]
 b7.bitFlip(3)

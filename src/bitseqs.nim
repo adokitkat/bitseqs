@@ -2,7 +2,7 @@ import std/[enumerate, sequtils]
 
 type
   Bit* = range[0'u8..1'u8]
-  BitField* = seq[Bit]
+  BitSeq* = seq[Bit]
 
 template `^^`(s, i: untyped): untyped =
   (when i is BackwardsIndex: s.len - int(i) else: int(i))
@@ -28,16 +28,16 @@ func `or`*(x, y: Bit): Bit {.inline.} = Bit(x.uint8 or y.uint8)
 func `xor`*(x, y: Bit): Bit {.inline.} = Bit(x.uint8 xor y.uint8)
 func `not`*(x: Bit): Bit {.inline.} = Bit(1 - x.uint8)
 
-## Initializes a `BitField`
-func newBitField*(): BitField = newSeq[Bit]()
-func newBitField*(size: Natural): BitField = newSeq[Bit](size)
-func newBitField*(typ: typedesc): BitField = newSeq[Bit](sizeof(typ) * 8)
+## Initializes a `BitSeq`
+func newBitSeq*(): BitSeq = newSeq[Bit]()
+func newBitSeq*(size: Natural): BitSeq = newSeq[Bit](size)
+func newBitSeq*(typ: typedesc): BitSeq = newSeq[Bit](sizeof(typ) * 8)
 
-func toBitField*[T: SomeOrdinal](value: T): BitField =
-  ## Construct a `BitField` from `value`.'
+func toBitSeq*[T: SomeOrdinal](value: T): BitSeq =
+  ## Construct a `BitSeq` from `value`.'
   ## Indexed from 0, least significant bit last.
   runnableExamples:
-    let bf = toBitField(0b1010'u8)
+    let bf = toBitSeq(0b1010'u8)
     doAssert bf == @[0.Bit, 0, 0, 0, 1, 0, 1, 0] # 8 bit long because of u8
     doAssert bf[^4..^1] == @[1.Bit, 0, 1, 0] # slice of last 4 bits
     doAssert bf[^4] == 1.Bit
@@ -47,16 +47,16 @@ func toBitField*[T: SomeOrdinal](value: T): BitField =
   for pos, i in enumerate(countdown(sizeof(value) * 8 - 1, 0)):
     result[i] = bit(value, pos)
 
-func fromBitfield*[T: typedesc(SomeUnsignedInt)](value: BitField): T =
+func fromBitSeq*[T: typedesc(SomeUnsignedInt)](value: BitSeq): T =
   ## Construct a `SomeUnsignedInt` from `value`.
   runnableExamples:
     var bf1 = @[1.Bit, 0, 0, 0, 1, 0, 0, 1]
-    doAssert fromBitfield[uint8](bf1) == 0b1000_1001
-    doAssert fromBitfield[uint16](bf1) == 0b1000_1001
-    doAssert fromBitfield[BiggestUInt](bf1) == 0b1000_1001
+    doAssert fromBitSeq[uint8](bf1) == 0b1000_1001
+    doAssert fromBitSeq[uint16](bf1) == 0b1000_1001
+    doAssert fromBitSeq[BiggestUInt](bf1) == 0b1000_1001
     var bf2 = @[1.Bit].cycle(8) & bf1
-    doAssert fromBitfield[uint8](bf2) == 0b1111_1111_1000_1001
-    doAssert fromBitfield[uint8](bf2) == 0b0000_0000_1000_1001
+    doAssert fromBitSeq[uint8](bf2) == 0b1111_1111_1000_1001
+    doAssert fromBitSeq[uint8](bf2) == 0b0000_0000_1000_1001
 
   result = 0
   var
@@ -66,12 +66,12 @@ func fromBitfield*[T: typedesc(SomeUnsignedInt)](value: BitField): T =
     (i, bit) = x
     result = result or (T(bit) shl i)
 
-func resize*(bf: var BitField, size: Natural) = 
+func resize*(bf: var BitSeq, size: Natural) = 
   ## Resize `bf` to `size`.
   ## If `size` is smaller than `bf.len`, the most significant bits are dropped.
   ## If `size` is larger than `bf.len`, the most significant bits are padded with 0.
   runnableExamples:
-    var bf: BitField = @[1.Bit, 0, 1, 0]
+    var bf: BitSeq = @[1.Bit, 0, 1, 0]
     bf.resize(8)
     doAssert bf == @[0.Bit, 0, 0, 0, 1, 0, 1, 0]
     bf.resize(4)
@@ -86,110 +86,110 @@ func resize*(bf: var BitField, size: Natural) =
   elif size > bf.len:
     bf.insert(newSeq[Bit](size - bf.len))
 
-template resize*(bf: var BitField, typ: typedesc) =
+template resize*(bf: var BitSeq, typ: typedesc) =
   resize(bf, sizeof(typ) * 8)
   
-#func fromBitfieldBigEndian*[T: typedesc(SomeUnsignedInt)](value: BitField): T =
+#func fromBitSeqBigEndian*[T: typedesc(SomeUnsignedInt)](value: BitSeq): T =
 #  ## Construct a big endian `SomeUnsignedInt` from `value`.
 #  result = 0
 #  for i, bit in value:
 #    result = result or (T(bit) shl i)
 
 ## Indexes of on/true/1 bits
-iterator bitsIdxOn*(value: BitField): int {.inline.} =
+iterator bitsIdxOn*(value: BitSeq): int {.inline.} =
   for i, j in value:
     if j == 1:
       yield i
 
 template bitsIdxOn*(value: SomeOrdinal): int =
-  bitsIdxOn(value.toBitField)
+  bitsIdxOn(value.toBitSeq)
 
-func bitsIdxOnSeq*(value: BitField): seq[int] {.inline.} =
+func bitsIdxOnSeq*(value: BitSeq): seq[int] {.inline.} =
   bitsIdxOn(value).toSeq
 
 template bitsIdxOnSeq*(value: SomeOrdinal): seq[int] =
-  bitsIdxOnSeq(value.toBitField)
+  bitsIdxOnSeq(value.toBitSeq)
 
 ## Indexes of off/false/0 bits
-iterator bitsIdxOff(value: BitField): int {.inline.} =
+iterator bitsIdxOff(value: BitSeq): int {.inline.} =
   for i, j in value:
     if j == 0:
       yield i
 
 template bitsIdxOff*(value: SomeOrdinal): int =
-  bitsIdxOff(value.toBitField)
+  bitsIdxOff(value.toBitSeq)
 
-func bitsIdxOffSeq*(value: BitField): seq[int] {.inline.} =
+func bitsIdxOffSeq*(value: BitSeq): seq[int] {.inline.} =
   bitsIdxOff(value).toSeq
 
 template bitsIdxOffSeq*(value: SomeOrdinal): seq[int] =
-  bitsIdxOffSeq(value.toBitField)
+  bitsIdxOffSeq(value.toBitSeq)
 
 ## Bitwise operations
-func `and`*(a, b: BitField): BitField =
+func `and`*(a, b: BitSeq): BitSeq =
   ## Bitwise AND of `a` and `b`.
   assert a.len == b.len
   result = newSeq[Bit](a.len)
   for i in 0 ..< a.len:
     result[i] = a[i] and b[i]
 
-func `and=`*(a: var BitField, b: BitField) =
+func `and=`*(a: var BitSeq, b: BitSeq) =
   ## Bitwise AND of `a` and `b`.
   assert a.len == b.len
   for i in 0 ..< a.len:
     a[i] = a[i] and b[i]
 
-func `or`*(a, b: BitField): BitField =
+func `or`*(a, b: BitSeq): BitSeq =
   ## Bitwise OR of `a` and `b`.
   assert a.len == b.len
   result = newSeq[Bit](a.len)
   for i in 0 ..< a.len:
     result[i] = a[i] or b[i]
 
-func `or=`*(a: var BitField, b: BitField) =
+func `or=`*(a: var BitSeq, b: BitSeq) =
   ## Bitwise OR of `a` and `b`.
   assert a.len == b.len
   for i in 0 ..< a.len:
     a[i] = a[i] or b[i]
 
-func `xor`*(a, b: BitField): BitField =
+func `xor`*(a, b: BitSeq): BitSeq =
   ## Bitwise XOR of `a` and `b`.
   assert a.len == b.len
   result = newSeq[Bit](a.len)
   for i in 0 ..< a.len:
     result[i] = a[i] xor b[i]
 
-func `xor=`*(a: var BitField, b: BitField) =
+func `xor=`*(a: var BitSeq, b: BitSeq) =
   ## Bitwise XOR of `a` and `b`.
   assert a.len == b.len
   for i in 0 ..< a.len:
     a[i] = a[i] xor b[i]
 
-func `not`*(a: BitField): BitField =
+func `not`*(a: BitSeq): BitSeq =
   ## Bitwise NOT of `a`.
   result = newSeq[Bit](a.len)
   for i in 0 ..< a.len:
     result[i] = 1 - a[i]
 
 # Bit operations
-func bitSet*(field: var BitField, pos: SomeInteger or BackwardsIndex, value: Bit) {.inline.} = 
+func bitSet*(field: var BitSeq, pos: SomeInteger or BackwardsIndex, value: Bit) {.inline.} = 
   ## Set a `Bit` at position `pos` in `field`. In-place.
   ## Indexed from 0, most significant bit first.
   
   let p = field ^^ pos
   field[p] = value
 
-proc bitSet*[U, V: Ordinal](field: var BitField, pos: HSlice[U,V], value: Bit) {.inline.} =
+proc bitSet*[U, V: Ordinal](field: var BitSeq, pos: HSlice[U,V], value: Bit) {.inline.} =
   let a = field ^^ pos.a
   let L = (field ^^ pos.b) - a + 1
   for i in 0..<L:
     field[i+a] = value
 
-func bitFlip*(field: var BitField, pos: SomeInteger or BackwardsIndex) {.inline.} = 
+func bitFlip*(field: var BitSeq, pos: SomeInteger or BackwardsIndex) {.inline.} = 
   ## Flip a `Bit` at position `pos` in `field`. In-place.
   ## Indexed from 0, most significant bit first.
   runnableExamples:
-    var bf: BitField = @[1.Bit, 0, 1, 0]
+    var bf: BitSeq = @[1.Bit, 0, 1, 0]
     bf.bitFlip(0)
     doAssert bf == @[0.Bit, 0, 1, 0]
     bf.bitFlip(3)
@@ -200,7 +200,7 @@ func bitFlip*(field: var BitField, pos: SomeInteger or BackwardsIndex) {.inline.
   let p = field ^^ pos
   field[p] = not field[p]
 
-func bitFlip*[U, V: Ordinal](field: var BitField, pos: HSlice[U,V]) {.inline.} = 
+func bitFlip*[U, V: Ordinal](field: var BitSeq, pos: HSlice[U,V]) {.inline.} = 
   let a = field ^^ pos.a
   let L = (field ^^ pos.b) - a + 1
   for i in 0..<L:
