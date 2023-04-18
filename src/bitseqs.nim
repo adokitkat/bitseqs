@@ -54,9 +54,10 @@ func fromBitSeq*[T: typedesc(SomeUnsignedInt)](value: BitSeq): T =
     doAssert fromBitSeq[uint8](bf1) == 0b1000_1001
     doAssert fromBitSeq[uint16](bf1) == 0b1000_1001
     doAssert fromBitSeq[BiggestUInt](bf1) == 0b1000_1001
-    var bf2 = @[1.Bit].cycle(8) & bf1
-    doAssert fromBitSeq[uint8](bf2) == 0b1111_1111_1000_1001
-    doAssert fromBitSeq[uint8](bf2) == 0b0000_0000_1000_1001
+    import std/sequtils
+    var bf2 = @[1.Bit].cycle(8) & bf1 # 16 bit long - 8 bits of 1 and 8 bits of appended bf1
+    doAssert fromBitSeq[uint16](bf2) == 0b1111_1111_1000_1001
+    doAssert fromBitSeq[uint8](bf2) == 0b1000_1001 # whole BitSeq doesn't fit in uint8
 
   result = 0
   var
@@ -193,6 +194,7 @@ func bitFlip*(field: var BitSeq, pos: SomeInteger or BackwardsIndex) {.inline.} 
     bf.bitFlip(0)
     doAssert bf == @[0.Bit, 0, 1, 0]
     bf.bitFlip(3)
+    import std/sugar
     doAssert bf == @[0.Bit, 0, 1, 1]
     doAssert bf.dup(bitFlip(3)) == @[0.Bit, 0, 1, 0] # Duplicates `bf` first and flips bit 3
     doAssert bf == @[0.Bit, 0, 1, 1] # Original `bf` is unchanged

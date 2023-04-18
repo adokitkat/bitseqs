@@ -1,6 +1,6 @@
 # Package
 
-version     = "0.1.1"
+version     = "0.1.2"
 author      = "Adam Múdry"
 description = "Utility for a bit manipulation"
 license     = "MIT"
